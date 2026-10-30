@@ -1,0 +1,23 @@
+database:
+  file: dreamshop.db
+
+trade:
+  quantity-timeout-seconds: 30
+  preview-timeout-seconds: 30
+  maximum-quantity: 2304
+
+display:
+  default-mode: SIGN_AND_ITEM
+  # The sign always has four lines. You can change their text, order and colors.
+  # Supported placeholders:
+  # {owner}         shop owner or system shop name
+  # {type}          raw type: 出售 or 收购
+  # {type-colored}  legacy colors: blue 出售 or green 收购
+  # {stock}         selling stock, buying capacity, or 无限
+  # {item}          displayed product name
+  # {price}         unit price
+  sign-lines:
+    - '&4&l系统商店'
+    - '&0类型: &a{type}'
+    - '&f{item}'
+    - '&0价格: &1&l{price} &0硬币'

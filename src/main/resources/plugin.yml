@@ -1,0 +1,24 @@
+name: DreamShop
+version: ${version}
+main: cn.mythicland.dreamshop.DreamShopPlugin
+author: MythicLand
+load: POSTWORLD
+depend: [ DreamLib, DreamRPG ]
+softdepend: [ DreamWorld ]
+description: A safe, MythicMobs-aware chest shop for DreamRPG.
+
+commands:
+  dreamshop:
+    description: Manage DreamShop shops.
+    aliases: [ dshop ]
+
+permissions:
+  dreamshop.use:
+    description: Allows players to trade with DreamShop shops.
+    default: true
+  dreamshop.admin:
+    description: Allows administration and system shop management.
+    default: op
+  dreamshop.reload:
+    description: Allows reloading DreamShop configuration.
+    default: op

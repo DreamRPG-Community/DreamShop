@@ -1,0 +1,1 @@
+ALTER TABLE shops ADD COLUMN stock_size INTEGER;
