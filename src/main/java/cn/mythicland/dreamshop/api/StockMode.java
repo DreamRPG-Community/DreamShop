@@ -5,10 +5,14 @@ package cn.mythicland.dreamshop.api;
  */
 public enum StockMode {
 
-    /** The private virtual chest is the source of truth for available stock. */
+    /**
+     * The private virtual chest is the source of truth for available stock.
+     */
     NORMAL("普通库存"),
 
-    /** The shop can trade without consuming product stock. */
+    /**
+     * The shop can trade without consuming product stock.
+     */
     UNLIMITED("无限库存");
 
     private final String displayName;

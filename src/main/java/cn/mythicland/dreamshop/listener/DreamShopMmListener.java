@@ -30,7 +30,8 @@ public final class DreamShopMmListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEvent(Event event) {
-        if (!EVENT_NAME.equals(event.getClass().getName()) && !SYNC_EVENT_NAME.equals(event.getClass().getName())) return;
+        if (!EVENT_NAME.equals(event.getClass().getName()) && !SYNC_EVENT_NAME.equals(event.getClass().getName()))
+            return;
         tasks.runLater(0L, service::onMythicItemsChanged);
     }
 }

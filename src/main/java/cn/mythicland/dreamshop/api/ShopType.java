@@ -5,10 +5,14 @@ package cn.mythicland.dreamshop.api;
  */
 public enum ShopType {
 
-    /** The shop gives the product and receives coins. */
+    /**
+     * The shop gives the product and receives coins.
+     */
     SELLING("出售商店"),
 
-    /** The shop receives the product and gives coins. */
+    /**
+     * The shop receives the product and gives coins.
+     */
     BUYING("收购商店");
 
     private final String displayName;

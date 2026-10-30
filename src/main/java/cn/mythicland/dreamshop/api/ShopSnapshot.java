@@ -8,19 +8,19 @@ import java.util.UUID;
 /**
  * Immutable public snapshot of a shop.
  *
- * @param id             block identifier
- * @param owner          owner UUID, or null for an administrator system shop
- * @param adminShop      whether the shop is owned by the system
- * @param product        product identity and template
- * @param price          fixed unit price
- * @param type           sell or buy
- * @param stockMode      managed or unlimited inventory
- * @param displayMode    visual display setting
- * @param status         current health state
- * @param invalidReason  reason when the shop is invalid
- * @param stock          currently available matching items
- * @param createdAt      creation time
- * @param updatedAt      last persistence time
+ * @param id            block identifier
+ * @param owner         owner UUID, or null for an administrator system shop
+ * @param adminShop     whether the shop is owned by the system
+ * @param product       product identity and template
+ * @param price         fixed unit price
+ * @param type          sell or buy
+ * @param stockMode     managed or unlimited inventory
+ * @param displayMode   visual display setting
+ * @param status        current health state
+ * @param invalidReason reason when the shop is invalid
+ * @param stock         currently available matching items
+ * @param createdAt     creation time
+ * @param updatedAt     last persistence time
  */
 public record ShopSnapshot(
         ShopId id,

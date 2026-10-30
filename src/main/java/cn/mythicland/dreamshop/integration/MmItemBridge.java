@@ -139,7 +139,7 @@ public final class MmItemBridge {
      * Detached identity used by the shop record.
      *
      * @param internalName MM item ID
-     * @param revision source revision
+     * @param revision     source revision
      */
     public record Identity(String internalName, String revision) {
 

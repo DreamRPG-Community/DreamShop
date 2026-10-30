@@ -5,13 +5,19 @@ package cn.mythicland.dreamshop.api;
  */
 public enum DisplayMode {
 
-    /** Only update the shop sign. */
+    /**
+     * Only update the shop sign.
+     */
     SIGN("仅牌子"),
 
-    /** Update the sign and expose the product as a display item. */
+    /**
+     * Update the sign and expose the product as a display item.
+     */
     SIGN_AND_ITEM("牌子 + 物品展示"),
 
-    /** Disable plugin-owned display updates. */
+    /**
+     * Disable plugin-owned display updates.
+     */
     OFF("关闭展示");
 
     private final String displayName;

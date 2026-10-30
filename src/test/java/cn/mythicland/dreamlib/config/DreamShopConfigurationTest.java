@@ -48,6 +48,7 @@ class DreamShopConfigurationTest {
         DreamShopConfiguration settings = new DreamShopConfiguration();
 
         assertThrows(IllegalStateException.class,
-                () -> settings.reload(new ConfigView(configuration, ignored -> { })));
+                () -> settings.reload(new ConfigView(configuration, ignored -> {
+                })));
     }
 }

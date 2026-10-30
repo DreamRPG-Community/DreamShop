@@ -85,18 +85,19 @@ final class ItemMatcher {
         return amount - remaining;
     }
 
-    static boolean canAdd(Inventory inventory, ShopRecord record, MmItemBridge mm, int amount) {
+    static boolean canAdd(Inventory inventory, ShopRecord record, int amount) {
         if (amount < 1) return true;
+        ItemStack product = record.product();
         ItemStack[] contents = inventory.getContents();
         InventorySimulation simulation = new InventorySimulation(contents);
         int remaining = amount;
         for (int slot = 0; slot < simulation.size() && remaining > 0; slot++) {
             ItemStack item = simulation.item(slot);
             if (isEmpty(item)) {
-                int moved = Math.min(remaining, record.product().getMaxStackSize());
-                simulation.set(slot, record.product(), moved);
+                int moved = Math.min(remaining, product.getMaxStackSize());
+                simulation.set(slot, product, moved);
                 remaining -= moved;
-            } else if (matches(item, record, mm)) {
+            } else if (item.isSimilar(product)) {
                 int capacity = Math.max(0, item.getMaxStackSize() - item.getAmount());
                 int moved = Math.min(remaining, capacity);
                 item.setAmount(item.getAmount() + moved);

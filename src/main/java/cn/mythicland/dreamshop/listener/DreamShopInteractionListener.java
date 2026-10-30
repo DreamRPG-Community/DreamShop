@@ -185,9 +185,9 @@ public final class DreamShopInteractionListener implements Listener {
         service.closePlayer(event.getPlayer());
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent event) {
-        service.cancelPurchaseForTeleport(event.getPlayer());
+        service.cancelShopForTeleport(event.getPlayer());
         service.closePlayer(event.getPlayer());
     }
 
@@ -195,7 +195,7 @@ public final class DreamShopInteractionListener implements Listener {
     public void onMove(PlayerMoveEvent event) {
         if (event.getTo() == null) return;
         if (sameView(event)) return;
-        service.validatePurchasePosition(event.getPlayer());
+        service.validateShopPosition(event.getPlayer(), event.getTo());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

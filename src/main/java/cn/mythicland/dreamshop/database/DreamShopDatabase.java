@@ -3,12 +3,12 @@ package cn.mythicland.dreamshop.database;
 import cn.mythicland.dreamlib.api.DreamLibApi;
 import cn.mythicland.dreamlib.bootstrap.DreamLibPluginLifecycle;
 import cn.mythicland.dreamlib.bootstrap.annotation.LifecycleComponent;
+import cn.mythicland.dreamlib.database.DatabaseDrivers;
 import cn.mythicland.dreamlib.database.MigrationRunner;
 import cn.mythicland.dreamlib.database.MigrationSpec;
 import cn.mythicland.dreamlib.database.SqliteDatabase;
 import cn.mythicland.dreamlib.library.LibraryLoadResult;
 import cn.mythicland.dreamlib.library.LibraryService;
-import cn.mythicland.dreamlib.library.LibrarySpec;
 import cn.mythicland.dreamshop.config.DreamShopConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -23,12 +23,6 @@ import java.util.Objects;
  */
 @LifecycleComponent
 public final class DreamShopDatabase implements DreamLibPluginLifecycle {
-
-    private static final LibrarySpec SQLITE = new LibrarySpec(
-            "org.xerial:sqlite-jdbc:3.46.1.3",
-            "sqlite-jdbc-3.46.1.3.jar",
-            "4a4832720a65eaf7f4d6fd7ede52087b994dc5633c076f9e994dc0c8b4b0b4fa"
-    );
 
     private final JavaPlugin plugin;
     private final DreamLibApi lib;
@@ -60,7 +54,7 @@ public final class DreamShopDatabase implements DreamLibPluginLifecycle {
     public void enable() {
         libraries = lib.libraryService().load(
                 plugin,
-                List.of(SQLITE),
+                List.of(DatabaseDrivers.SQLITE),
                 LibraryService.DEFAULT_REPOSITORY
         );
         try {
@@ -76,7 +70,7 @@ public final class DreamShopDatabase implements DreamLibPluginLifecycle {
             database = lib.databaseService().openSqlite(
                     plugin,
                     databaseFile,
-                    "org.sqlite.JDBC",
+                    DatabaseDrivers.SQLITE_CLASS,
                     libraries.classLoader()
             );
             new MigrationRunner().migrate(

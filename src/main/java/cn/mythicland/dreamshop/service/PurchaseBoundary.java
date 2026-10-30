@@ -6,7 +6,7 @@ import org.bukkit.util.Vector;
 import java.util.Objects;
 
 /**
- * Geometric limits for an active DreamShop purchase interaction.
+ * Geometric limits for an active DreamShop interaction.
  */
 final class PurchaseBoundary {
 
@@ -17,6 +17,14 @@ final class PurchaseBoundary {
     private static final double ANGLE_EPSILON = 0.001D;
 
     private PurchaseBoundary() {
+    }
+
+    static boolean outsideInteraction(Location playerLocation, double eyeHeight, Location shopLocation) {
+        Objects.requireNonNull(playerLocation, "playerLocation");
+        Objects.requireNonNull(shopLocation, "shopLocation");
+        if (!Objects.equals(playerLocation.getWorld(), shopLocation.getWorld())) return true;
+        if (outsideDistance(playerLocation.toVector(), shopLocation.toVector())) return true;
+        return outsideViewAngle(playerLocation.clone().add(0.0D, eyeHeight, 0.0D), shopLocation);
     }
 
     static boolean outsideDistance(Vector playerPosition, Vector shopPosition) {

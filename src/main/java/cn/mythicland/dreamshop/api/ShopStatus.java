@@ -5,12 +5,18 @@ package cn.mythicland.dreamshop.api;
  */
 public enum ShopStatus {
 
-    /** The shop can be traded with. */
+    /**
+     * The shop can be traded with.
+     */
     ACTIVE,
 
-    /** The product cannot currently be materialized or matched. */
+    /**
+     * The product cannot currently be materialized or matched.
+     */
     INVALID,
 
-    /** The record is retained for audit purposes but no longer active. */
+    /**
+     * The record is retained for audit purposes but no longer active.
+     */
     DELETED
 }

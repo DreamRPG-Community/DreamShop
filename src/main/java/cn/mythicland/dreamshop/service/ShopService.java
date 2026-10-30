@@ -495,6 +495,9 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
         if (record == null || record.status() != ShopStatus.ACTIVE) {
             return invalidPreview(token, request, record, expiresAt, "商店当前不可用。");
         }
+        if (outsideShopBoundary(player, request.shopId(), player.getLocation())) {
+            return invalidPreview(token, request, record, expiresAt, "交易已取消。");
+        }
         if (record.owner() != null && record.owner().equals(request.player())) {
             return invalidPreview(token, request, record, expiresAt, "不能和自己的商店交易。");
         }
@@ -534,7 +537,8 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
         requirePrimaryThread();
         PendingPreview pending = pendingPreviews.remove(Objects.requireNonNull(confirmation, "confirmation").token());
         if (pending == null || !pending.request().player().equals(confirmation.player())) {
-            return failedTrade(confirmation.player(), null, 1, BigDecimal.ZERO, TradeResult.Status.EXPIRED, "交易预览已失效。");
+            return failedTrade(confirmation.player(), null, 1, BigDecimal.ZERO, TradeResult.Status.EXPIRED,
+                    "交易预览已失效。");
         }
         TradePreview preview = pending.preview();
         if (preview.expiresAt().isBefore(Instant.now())) {
@@ -546,6 +550,10 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
         if (record == null || player == null || record.status() != ShopStatus.ACTIVE) {
             return failedTrade(confirmation.player(), preview.shop().id(), preview.quantity(), preview.totalPrice(),
                     TradeResult.Status.REJECTED, "商店当前不可用。");
+        }
+        if (outsideShopBoundary(player, preview.shop().id(), player.getLocation())) {
+            return failedTrade(confirmation.player(), preview.shop().id(), preview.quantity(), preview.totalPrice(),
+                    TradeResult.Status.REJECTED, "交易已取消。");
         }
         if (!isPreviewCurrent(preview, record)) {
             return failedTrade(confirmation.player(), preview.shop().id(), preview.quantity(), preview.totalPrice(),
@@ -671,17 +679,18 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
         if (record.type() == ShopType.SELLING) {
             if (record.stockMode() != StockMode.UNLIMITED && stock < quantity) return "库存不足。";
             if (balance.compareTo(total) < 0) return "余额不足。";
-            if (!ItemMatcher.canAdd(player.getInventory(), record, mm, quantity)) return "你的背包空间不足。";
+            if (!ItemMatcher.canAdd(player.getInventory(), record, quantity)) return "你的背包空间不足。";
             return "";
         }
         if (record.owner() != null && !coins.has(record.owner(), total)) return "店主余额不足。";
         if (ItemMatcher.count(player.getInventory(), record, mm) < quantity) return "你的物品数量不足。";
         if (record.stockMode() != StockMode.UNLIMITED
-                && !ItemMatcher.canAdd(managedInventory(record), record, mm, quantity)) return "商店库存空间不足。";
+                && !ItemMatcher.canAdd(managedInventory(record), record, quantity)) return "商店库存空间不足。";
         return "";
     }
 
-    private TradePreview invalidPreview(UUID token, TradeRequest request, ShopRecord record, Instant expiresAt, String message) {
+    private TradePreview invalidPreview(UUID token, TradeRequest request, ShopRecord record, Instant expiresAt,
+            String message) {
         ShopSnapshot snapshot = record == null ? emptySnapshot(request.shopId()) : snapshot(record);
         BigDecimal price = record == null ? BigDecimal.ZERO.setScale(2) : record.price();
         TradePreview preview = new TradePreview(token, snapshot, request.player(), request.quantity(),
@@ -717,18 +726,22 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
         );
     }
 
-    private TradeResult finishFailed(UUID transactionId, ShopRecord record, Player player, TradePreview preview, String reason) {
+    private TradeResult finishFailed(UUID transactionId, ShopRecord record, Player player, TradePreview preview,
+            String reason) {
         repository.insertTransaction(transaction(transactionId, record, player.getUniqueId(), preview.quantity(),
-                preview.totalPrice(), TransactionRecord.Status.FAILED, Objects.requireNonNullElse(reason, "交易失败"), Instant.now()));
+                preview.totalPrice(), TransactionRecord.Status.FAILED, Objects.requireNonNullElse(reason, "交易失败"),
+                Instant.now()));
         return failedTrade(player.getUniqueId(), record.id(), preview.quantity(), preview.totalPrice(),
                 TradeResult.Status.FAILED, Objects.requireNonNullElse(reason, "交易失败"), transactionId);
     }
 
-    private TradeResult failedTrade(UUID player, ShopId shopId, int quantity, BigDecimal total, TradeResult.Status status, String message) {
+    private TradeResult failedTrade(UUID player, ShopId shopId, int quantity, BigDecimal total,
+            TradeResult.Status status, String message) {
         return failedTrade(player, shopId, quantity, total, status, message, UUID.randomUUID());
     }
 
-    private TradeResult failedTrade(UUID player, ShopId shopId, int quantity, BigDecimal total, TradeResult.Status status, String message, UUID id) {
+    private TradeResult failedTrade(UUID player, ShopId shopId, int quantity, BigDecimal total,
+            TradeResult.Status status, String message, UUID id) {
         return new TradeResult(status, id, shopId == null ? new ShopId("unknown", 0, 0, 0) : shopId,
                 player, quantity, total, message, Instant.now());
     }
@@ -739,7 +752,7 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
     }
 
     private TransactionRecord transaction(UUID id, ShopRecord record, UUID player, int quantity, BigDecimal total,
-                                          TransactionRecord.Status status, String reason, Instant createdAt) {
+            TransactionRecord.Status status, String reason, Instant createdAt) {
         return new TransactionRecord(id, record.id(), player, record.owner(), record.type(), quantity,
                 record.price(), total, status, reason, createdAt);
     }
@@ -1177,30 +1190,44 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
     }
 
     /**
-     * Cancels an active purchase when the player no longer remains within the interaction boundary.
-     * This is called for both position changes and head rotation changes.
-     *
-     * @param player player whose purchase position changed
+     * Cancels a shop interaction when the player's position or view leaves its boundary.
      */
-    public void validatePurchasePosition(Player player) {
+    public void validateShopPosition(Player player, Location location) {
         requirePrimaryThread();
         UUID playerId = Objects.requireNonNull(player, "player").getUniqueId();
-        Optional<ShopId> shopId = activePurchaseShop(playerId);
+        Optional<ShopId> shopId = activeInteractionShop(playerId);
         if (shopId.isEmpty()) return;
-        String violation = purchaseBoundaryViolation(player, shopId.get());
-        if (violation == null) return;
-        cancelActivePurchase(player, violation);
+        ShopId id = shopId.orElseThrow();
+        InputSession input = inputSessions.get(playerId);
+        ShopRecord record = records.get(id);
+        if (!(input instanceof CreatePriceInput)
+                && (record == null || record.status() == ShopStatus.DELETED)) {
+            cancelShopInteraction(player);
+            return;
+        }
+        if ((input instanceof QuantityInput || input instanceof PriceInput)
+                && record.status() != ShopStatus.ACTIVE) {
+            cancelShopInteraction(player);
+            return;
+        }
+        if (!outsideShopBoundary(player, id, location)) return;
+        cancelShopInteraction(player);
+    }
+
+    private boolean outsideShopBoundary(Player player, ShopId id, Location location) {
+        World world = Bukkit.getWorld(id.world());
+        if (world == null) return true;
+        Location center = new Location(world, id.x() + 0.5D, id.y() + 0.5D, id.z() + 0.5D);
+        return PurchaseBoundary.outsideInteraction(location, player.getEyeHeight(), center);
     }
 
     /**
-     * Cancels an active purchase before a teleport changes the player's interaction context.
-     *
-     * @param player player being teleported
+     * Cancels an active shop interaction when the player teleports.
      */
-    public void cancelPurchaseForTeleport(Player player) {
+    public void cancelShopForTeleport(Player player) {
         requirePrimaryThread();
-        if (activePurchaseShop(Objects.requireNonNull(player, "player").getUniqueId()).isPresent()) {
-            cancelActivePurchase(player, PURCHASE_CANCELLED_MESSAGE);
+        if (activeInteractionShop(Objects.requireNonNull(player, "player").getUniqueId()).isPresent()) {
+            cancelShopInteraction(player);
         }
     }
 
@@ -1219,6 +1246,8 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
     private void beginQuantityInput(Player player, ShopId id) {
         int timeout = configuration.snapshot().quantityTimeoutSeconds();
         putInput(player.getUniqueId(), new QuantityInput(id, expiresIn(timeout)), timeout);
+        validateShopPosition(player, player.getLocation());
+        if (!inputSessions.containsKey(player.getUniqueId())) return;
         player.sendMessage(LegacyText.colorize("&e请输入交易数量, 输入 cancel 取消。"));
     }
 
@@ -1272,6 +1301,8 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
         int timeout = configuration.snapshot().quantityTimeoutSeconds();
         putInput(player.getUniqueId(), new CreatePriceInput(block.getLocation(), product, adminShop,
                 expiresIn(timeout)), timeout);
+        validateShopPosition(player, player.getLocation());
+        if (!inputSessions.containsKey(player.getUniqueId())) return;
         player.sendMessage(LegacyText.colorize("&e请输入每件商品价格, 输入 cancel 取消。"));
     }
 
@@ -1297,6 +1328,8 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
         int timeout = configuration.snapshot().quantityTimeoutSeconds();
         putInput(player.getUniqueId(), new PriceInput(id, expiresIn(timeout)), timeout);
         menus.close(player);
+        validateShopPosition(player, player.getLocation());
+        if (!inputSessions.containsKey(player.getUniqueId())) return;
         player.sendMessage(LegacyText.colorize("&e请输入新的每件价格, 输入 cancel 取消。"));
     }
 
@@ -1312,6 +1345,7 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
      * @param text   raw input
      */
     public void acceptChatInput(Player player, String text) {
+        validateShopPosition(player, player.getLocation());
         InputSession session = inputSessions.get(player.getUniqueId());
         if (session == null) return;
         if (session.expiresAt().isBefore(Instant.now())) {
@@ -1415,8 +1449,9 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
             player.sendMessage(LegacyText.colorize("&c你没有管理这个商店的权限。"));
             return;
         }
-        managementSessions.put(player.getUniqueId(), id);
         menus.open(player, new ShopManagementMenu(this, id));
+        managementSessions.put(player.getUniqueId(), id);
+        validateShopPosition(player, player.getLocation());
     }
 
     /**
@@ -1450,8 +1485,9 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
         }
         ShopRecord record = records.get(id);
         if (record != null && record.status() == ShopStatus.ACTIVE) {
-            infoSessions.put(player.getUniqueId(), id);
             menus.open(player, new ShopInfoMenu(this, id));
+            infoSessions.put(player.getUniqueId(), id);
+            validateShopPosition(player, player.getLocation());
         }
     }
 
@@ -1481,6 +1517,7 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
                 new ShopStockInventorySession(holder, inventory)
         );
         player.openInventory(inventory);
+        validateShopPosition(player, player.getLocation());
     }
 
     public boolean canManage(Player player, ShopRecord record) {
@@ -1709,46 +1746,35 @@ public final class ShopService implements DreamShopApi, DreamLibPluginLifecycle 
         boolean hadInfo = infoSessions.remove(uniqueId) != null;
         boolean hadNativeStock = stockInventorySessions.containsKey(uniqueId);
         if (hadNativeStock) closeNativeStockInventory(player);
-        if (hadInput || hadPreview || hadManagement || hadStock || hadInfo || hadNativeStock) menus.close(player);
+        if (hadInput || hadPreview || hadManagement || hadStock || hadInfo || hadNativeStock) {
+            menus.close(player);
+        }
     }
 
-    private Optional<ShopId> activePurchaseShop(UUID playerId) {
+    private Optional<ShopId> activeInteractionShop(UUID playerId) {
         InputSession input = inputSessions.get(playerId);
         if (input instanceof QuantityInput quantity) return Optional.of(quantity.shopId());
+        if (input instanceof PriceInput price) return Optional.of(price.shopId());
+        if (input instanceof CreatePriceInput create) return Optional.of(ShopId.from(create.location()));
+        ShopId stock = stockSessions.get(playerId);
+        if (stock != null) return Optional.of(stock);
+        ShopId management = managementSessions.get(playerId);
+        if (management != null) return Optional.of(management);
+        ShopId info = infoSessions.get(playerId);
+        if (info != null) return Optional.of(info);
         return pendingPreviews.values().stream()
                 .filter(pending -> pending.request().player().equals(playerId))
                 .map(pending -> pending.request().shopId())
                 .findFirst();
     }
 
-    private String purchaseBoundaryViolation(Player player, ShopId shopId) {
-        ShopRecord record = records.get(shopId);
-        if (record == null || record.status() != ShopStatus.ACTIVE) return PURCHASE_CANCELLED_MESSAGE;
-        World world = Bukkit.getWorld(shopId.world());
-        if (world == null || !world.equals(player.getWorld())) return PURCHASE_CANCELLED_MESSAGE;
-        Location shopLocation = new Location(
-                world,
-                shopId.x() + 0.5D,
-                shopId.y() + 0.5D,
-                shopId.z() + 0.5D
-        );
-        if (PurchaseBoundary.outsideDistance(player.getLocation().toVector(), shopLocation.toVector())) {
-            return PURCHASE_CANCELLED_MESSAGE;
-        }
-        if (PurchaseBoundary.outsideViewAngle(player.getEyeLocation(), shopLocation)) {
-            return PURCHASE_CANCELLED_MESSAGE;
-        }
-        return null;
-    }
-
-    private void cancelActivePurchase(Player player, String message) {
+    private void cancelShopInteraction(Player player) {
         UUID playerId = player.getUniqueId();
         InputSession input = inputSessions.get(playerId);
-        boolean removedInput = input instanceof QuantityInput && inputSessions.remove(playerId, input);
-        boolean removedPreviews = pendingPreviews.entrySet().removeIf(
-                entry -> entry.getValue().request().player().equals(playerId)
-        );
-        if (removedInput || removedPreviews) player.sendMessage(LegacyText.colorize(message));
+        boolean trade = input instanceof QuantityInput || pendingPreviews.values().stream()
+                .anyMatch(pending -> pending.request().player().equals(playerId));
+        closePlayer(player);
+        player.sendMessage(LegacyText.colorize(trade ? PURCHASE_CANCELLED_MESSAGE : "&c商店操作已取消。"));
     }
 
     private sealed interface InputSession permits QuantityInput, CreatePriceInput, PriceInput {
