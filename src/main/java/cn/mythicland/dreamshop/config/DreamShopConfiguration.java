@@ -1,10 +1,10 @@
 package cn.mythicland.dreamshop.config;
 
-import cn.mythicland.dreamlib.bootstrap.annotation.ConfigComponent;
-import cn.mythicland.dreamlib.config.ConfigValue;
-import cn.mythicland.dreamlib.config.ConfigView;
-import cn.mythicland.dreamlib.config.ConfigurableComponent;
 import cn.mythicland.dreamshop.api.DisplayMode;
+import cn.mythicland.framework.bukkit.config.ConfigView;
+import cn.mythicland.framework.bukkit.config.ConfigurableComponent;
+import cn.mythicland.framework.bukkit.config.annotation.ConfigComponent;
+import cn.mythicland.framework.bukkit.config.annotation.ConfigProperty;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,17 +33,12 @@ public final class DreamShopConfiguration implements ConfigurableComponent {
                 .toList();
         if (lines.size() != 4) throw new IllegalStateException("display.sign-lines must contain four lines");
         Snapshot next = new Snapshot(
-                raw.databaseFile(),
                 raw.quantityTimeoutSeconds(),
                 raw.previewTimeoutSeconds(),
                 raw.maximumQuantity(),
                 raw.defaultDisplayMode(),
                 lines
         );
-        Snapshot previous = snapshot;
-        if (previous != null && !previous.databaseFile().equals(next.databaseFile())) {
-            throw new IllegalStateException("database.file cannot be changed during reload; restart DreamShop");
-        }
         snapshot = next;
     }
 
@@ -59,36 +54,30 @@ public final class DreamShopConfiguration implements ConfigurableComponent {
     }
 
     private record RawSettings(
-            @ConfigValue(
-                    path = "database.file",
-                    defaultValue = "dreamshop.db",
-                    nonBlank = true
-            )
-            String databaseFile,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "trade.quantity-timeout-seconds",
                     defaultValue = "30",
                     positive = true
             )
             int quantityTimeoutSeconds,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "trade.preview-timeout-seconds",
                     defaultValue = "30",
                     positive = true
             )
             int previewTimeoutSeconds,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "trade.maximum-quantity",
                     defaultValue = "2304",
                     positive = true
             )
             int maximumQuantity,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "display.default-mode",
                     defaultValue = "SIGN_AND_ITEM"
             )
             DisplayMode defaultDisplayMode,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "display.sign-lines",
                     defaultValue = "&c{owner},&5类型:{type-colored} {stock},{item},每件价格: &1&l{price}",
                     trim = false
@@ -101,7 +90,6 @@ public final class DreamShopConfiguration implements ConfigurableComponent {
      * Immutable settings used by services and menus.
      */
     public record Snapshot(
-            String databaseFile,
             int quantityTimeoutSeconds,
             int previewTimeoutSeconds,
             int maximumQuantity,
@@ -110,11 +98,6 @@ public final class DreamShopConfiguration implements ConfigurableComponent {
     ) {
 
         public Snapshot {
-            databaseFile = Objects.requireNonNull(databaseFile, "databaseFile");
-            if (databaseFile.isBlank() || databaseFile.contains("/") || databaseFile.contains("\\")
-                    || databaseFile.contains("..")) {
-                throw new IllegalArgumentException("database.file must be a single file name");
-            }
             if (quantityTimeoutSeconds < 1 || previewTimeoutSeconds < 1 || maximumQuantity < 1) {
                 throw new IllegalArgumentException("DreamShop numeric settings must be positive");
             }

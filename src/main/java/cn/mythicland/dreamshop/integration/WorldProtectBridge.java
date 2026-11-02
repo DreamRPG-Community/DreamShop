@@ -1,10 +1,7 @@
 package cn.mythicland.dreamshop.integration;
 
-import cn.mythicland.dreamlib.bootstrap.annotation.InjectComponent;
-import cn.mythicland.dreamlib.plugin.PluginLookup;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.RegisteredServiceProvider;
-import org.bukkit.plugin.java.JavaPlugin;
+import cn.mythicland.framework.bukkit.plugin.PluginLookup;
+import cn.mythicland.framework.component.InjectComponent;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,6 +9,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
+
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Optional ServicesManager bridge to WorldProtect's temporary {@code /edit} mode.

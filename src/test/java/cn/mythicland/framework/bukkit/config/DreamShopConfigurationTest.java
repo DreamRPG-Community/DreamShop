@@ -1,4 +1,4 @@
-package cn.mythicland.dreamlib.config;
+package cn.mythicland.framework.bukkit.config;
 
 import cn.mythicland.dreamshop.config.DreamShopConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -21,22 +21,24 @@ class DreamShopConfigurationTest {
         YamlConfiguration configuration = new YamlConfiguration();
         configuration.set("database.file", "custom.db");
         configuration.set("display.sign-lines", List.of(
-                "&6{item}",
-                "&7{owner}",
-                "&b{type} {stock}",
-                "&e价格 {price}"
-        ));
+                        "&6{item}",
+                        "&7{owner}",
+                        "&b{type} {stock}",
+                        "&e价格 {price}"
+                )
+        );
         List<String> warnings = new ArrayList<>();
 
         DreamShopConfiguration settings = new DreamShopConfiguration();
         settings.reload(new ConfigView(configuration, warnings::add));
 
         assertEquals(List.of(
-                "&6{item}",
-                "&7{owner}",
-                "&b{type} {stock}",
-                "&e价格 {price}"
-        ), settings.snapshot().signLines());
+                        "&6{item}",
+                        "&7{owner}",
+                        "&b{type} {stock}",
+                        "&e价格 {price}"
+                ), settings.snapshot().signLines()
+        );
         assertTrue(warnings.isEmpty());
     }
 
@@ -49,6 +51,8 @@ class DreamShopConfigurationTest {
 
         assertThrows(IllegalStateException.class,
                 () -> settings.reload(new ConfigView(configuration, ignored -> {
-                })));
+                }
+                ))
+        );
     }
 }

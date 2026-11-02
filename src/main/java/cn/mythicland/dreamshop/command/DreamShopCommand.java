@@ -1,24 +1,25 @@
 package cn.mythicland.dreamshop.command;
 
-import cn.mythicland.dreamlib.bootstrap.annotation.CommandComponent;
-import cn.mythicland.dreamlib.bootstrap.annotation.CommandHandler;
-import cn.mythicland.dreamlib.command.CommandContext;
-import cn.mythicland.dreamlib.text.LegacyText;
+import cn.mythicland.dreamshop.DreamShopPlugin;
 import cn.mythicland.dreamshop.api.ShopId;
 import cn.mythicland.dreamshop.service.ShopService;
-import cn.mythicland.dreamshop.DreamShopPlugin;
+import cn.mythicland.framework.bukkit.command.CommandBinding;
+import cn.mythicland.framework.bukkit.command.CommandContext;
+import cn.mythicland.framework.bukkit.command.CommandRoute;
+import cn.mythicland.framework.bukkit.text.LegacyText;
+
+import java.util.Objects;
+import java.util.Set;
+
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.Objects;
-import java.util.Set;
-
 /**
  * Annotation-driven DreamShop command tree.
  */
-@CommandComponent("dreamshop")
+@CommandBinding("dreamshop")
 public final class DreamShopCommand {
 
     private static final String ROOT = "/dreamshop";
@@ -31,7 +32,12 @@ public final class DreamShopCommand {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
     }
 
-    @CommandHandler(value = "create", permission = ShopService.ADMIN_PERMISSION, usage = ROOT + " create")
+    @CommandRoute(
+            path = {"dreamshop", "create"},
+            maxArguments = Integer.MAX_VALUE,
+            permission = ShopService.ADMIN_PERMISSION,
+            usages = ROOT + " create"
+    )
     private void create(CommandContext context) {
         Player player = player(context.sender());
         Block block = targetBlock(player);
@@ -42,10 +48,11 @@ public final class DreamShopCommand {
         service.beginCreate(player, block, true);
     }
 
-    @CommandHandler(
-            value = "admin-create",
+    @CommandRoute(
+            path = {"dreamshop", "admin-create"},
+            maxArguments = Integer.MAX_VALUE,
             permission = ShopService.ADMIN_PERMISSION,
-            usage = ROOT + " admin-create"
+            usages = ROOT + " admin-create"
     )
     private void adminCreate(CommandContext context) {
         Player player = player(context.sender());
@@ -57,10 +64,11 @@ public final class DreamShopCommand {
         service.beginCreate(player, block, true);
     }
 
-    @CommandHandler(
-            value = "manage",
+    @CommandRoute(
+            path = {"dreamshop", "manage"},
+            maxArguments = Integer.MAX_VALUE,
             permission = ShopService.ADMIN_PERMISSION,
-            usage = ROOT + " manage"
+            usages = ROOT + " manage"
     )
     private void manage(CommandContext context) {
         Player player = player(context.sender());
@@ -68,14 +76,24 @@ public final class DreamShopCommand {
         if (id != null) service.openManagement(player, id);
     }
 
-    @CommandHandler(value = "info", permission = ShopService.USE_PERMISSION, usage = ROOT + " info")
+    @CommandRoute(
+            path = {"dreamshop", "info"},
+            maxArguments = Integer.MAX_VALUE,
+            permission = ShopService.USE_PERMISSION,
+            usages = ROOT + " info"
+    )
     private void info(CommandContext context) {
         Player player = player(context.sender());
         ShopId id = targetShop(player);
         if (id != null) service.openInfo(player, id);
     }
 
-    @CommandHandler(value = "refill", permission = ShopService.ADMIN_PERMISSION, usage = ROOT + " refill <数量>")
+    @CommandRoute(
+            path = {"dreamshop", "refill"},
+            maxArguments = Integer.MAX_VALUE,
+            permission = ShopService.ADMIN_PERMISSION,
+            usages = ROOT + " refill <数量>"
+    )
     private void refill(CommandContext context) {
         context.requireArguments(1);
         int amount = positiveInteger(context.argument(0), context);
@@ -84,7 +102,12 @@ public final class DreamShopCommand {
         if (id != null) service.refill(player, id, amount);
     }
 
-    @CommandHandler(value = "take", permission = ShopService.ADMIN_PERMISSION, usage = ROOT + " take <数量>")
+    @CommandRoute(
+            path = {"dreamshop", "take"},
+            maxArguments = Integer.MAX_VALUE,
+            permission = ShopService.ADMIN_PERMISSION,
+            usages = ROOT + " take <数量>"
+    )
     private void take(CommandContext context) {
         context.requireArguments(1);
         int amount = positiveInteger(context.argument(0), context);
@@ -93,7 +116,12 @@ public final class DreamShopCommand {
         if (id != null) service.take(player, id, amount);
     }
 
-    @CommandHandler(value = "delete", permission = ShopService.ADMIN_PERMISSION, usage = ROOT + " delete")
+    @CommandRoute(
+            path = {"dreamshop", "delete"},
+            maxArguments = Integer.MAX_VALUE,
+            permission = ShopService.ADMIN_PERMISSION,
+            usages = ROOT + " delete"
+    )
     private void delete(CommandContext context) {
         Player player = player(context.sender());
         ShopId id = targetShop(player);
@@ -102,7 +130,12 @@ public final class DreamShopCommand {
         service.openManagement(player, id);
     }
 
-    @CommandHandler(value = "reload", permission = "dreamshop.reload", usage = ROOT + " reload")
+    @CommandRoute(
+            path = {"dreamshop", "reload"},
+            maxArguments = Integer.MAX_VALUE,
+            permission = "dreamshop.reload",
+            usages = ROOT + " reload"
+    )
     private void reload(CommandContext context) {
         plugin.reloadDreamShop();
         context.sender().sendMessage(LegacyText.colorize("&aDreamShop 配置已重载。"));

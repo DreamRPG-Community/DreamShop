@@ -1,7 +1,5 @@
 package cn.mythicland.dreamshop.storage;
 
-import cn.mythicland.dreamlib.bootstrap.annotation.InjectComponent;
-import cn.mythicland.dreamlib.item.ItemStackArrayCodec;
 import cn.mythicland.dreamshop.api.DisplayMode;
 import cn.mythicland.dreamshop.api.ShopId;
 import cn.mythicland.dreamshop.api.ShopStatus;
@@ -9,7 +7,8 @@ import cn.mythicland.dreamshop.api.ShopType;
 import cn.mythicland.dreamshop.api.StockMode;
 import cn.mythicland.dreamshop.api.TransactionRecord;
 import cn.mythicland.dreamshop.database.DreamShopDatabase;
-import org.bukkit.inventory.ItemStack;
+import cn.mythicland.framework.bukkit.item.ItemStackArrayCodec;
+import cn.mythicland.framework.component.InjectComponent;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -21,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+
+import org.bukkit.inventory.ItemStack;
 
 /**
  * SQLite persistence boundary for DreamShop. It never opens or reads legacy QuickShop files.
@@ -73,7 +74,8 @@ public final class ShopRepository {
         executeUpdate(record, "INSERT INTO shops (id, world, x, y, z, owner, admin_shop, product, "
                 + "stock_size, stock, mythic_item_id, mythic_revision, price, shop_type, stock_mode, "
                 + "display_mode, status, invalid_reason, created_at, updated_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        );
     }
 
     /**
@@ -145,9 +147,14 @@ public final class ShopRepository {
         try {
             database.database().transaction(connection -> {
                 try (PreparedStatement statement = connection.prepareStatement(
-                        "INSERT OR REPLACE INTO transactions (id, shop_id, player, owner, shop_type, quantity, "
+                        "INSERT INTO transactions (id, shop_id, player, owner, shop_type, quantity, "
                                 + "unit_price, total_price, status, failure_reason, created_at) "
-                                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET "
+                                + "shop_id = excluded.shop_id, player = excluded.player, owner = excluded.owner, "
+                                + "shop_type = excluded.shop_type, quantity = excluded.quantity, "
+                                + "unit_price = excluded.unit_price, total_price = excluded.total_price, "
+                                + "status = excluded.status, failure_reason = excluded.failure_reason, "
+                                + "created_at = excluded.created_at")) {
                     statement.setString(1, record.id().toString());
                     statement.setString(2, record.shopId().encoded());
                     statement.setString(3, record.player().toString());

@@ -43,6 +43,7 @@ class ShopApiModelTest {
         source.setAmount(1);
 
         assertEquals(new BigDecimal("1.50"), request.price());
+        assertEquals(DisplayMode.SIGN_AND_ITEM, request.displayMode());
         assertEquals(8, request.product().getAmount());
         assertEquals(12, request.location().getBlockX());
     }
@@ -53,13 +54,15 @@ class ShopApiModelTest {
                 .location(nullLocation())
                 .product(new ItemStack(Material.STONE))
                 .price(BigDecimal.ZERO)
-                .build());
+                .build()
+        );
 
         assertThrows(IllegalArgumentException.class, () -> ShopCreateRequest.builder()
                 .location(nullLocation())
                 .product(new ItemStack(Material.STONE))
                 .price(BigDecimal.ONE)
-                .build());
+                .build()
+        );
     }
 
     @Test

@@ -1,10 +1,11 @@
 package cn.mythicland.dreamshop.menu;
 
-import cn.mythicland.dreamlib.menu.MenuSelection;
-import org.bukkit.event.inventory.ClickType;
-import org.junit.jupiter.api.Test;
+import cn.mythicland.framework.bukkit.menu.MenuSelection;
 
 import java.util.List;
+
+import org.bukkit.event.inventory.ClickType;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

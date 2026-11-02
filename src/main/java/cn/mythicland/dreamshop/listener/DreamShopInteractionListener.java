@@ -1,8 +1,15 @@
 package cn.mythicland.dreamshop.listener;
 
-import cn.mythicland.dreamlib.bootstrap.annotation.ListenerComponent;
 import cn.mythicland.dreamshop.api.ShopId;
 import cn.mythicland.dreamshop.service.ShopService;
+import cn.mythicland.framework.bukkit.component.ListenerComponent;
+import cn.mythicland.framework.component.InjectComponent;
+
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.block.DoubleChest;
@@ -24,18 +31,15 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.Optional;
-
 /**
  * Protects shop containers and routes player interactions into the domain service.
  */
+@InjectComponent
 @ListenerComponent
 public final class DreamShopInteractionListener implements Listener {
 
@@ -43,6 +47,11 @@ public final class DreamShopInteractionListener implements Listener {
 
     public DreamShopInteractionListener(ShopService service) {
         this.service = Objects.requireNonNull(service, "service");
+    }
+
+    @EventHandler
+    public void onWorldLoad(WorldLoadEvent event) {
+        service.onWorldLoaded();
     }
 
     /**

@@ -1,7 +1,9 @@
 package cn.mythicland.dreamshop.integration;
 
-import cn.mythicland.dreamlib.bootstrap.annotation.InjectComponent;
+import cn.mythicland.framework.validation.TextValidation;
+import cn.mythicland.framework.component.InjectComponent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -36,7 +38,7 @@ public final class MmItemBridge {
         Method resolvedRefresh = null;
         Object resolvedMode = null;
         try {
-            org.bukkit.plugin.Plugin addon = plugin.getServer().getPluginManager().getPlugin("DreamRPG");
+            Plugin addon = plugin.getServer().getPluginManager().getPlugin("DreamRPG");
             if (addon == null || !addon.isEnabled()) throw new IllegalStateException("DreamRPG items is unavailable");
             ClassLoader addonClassLoader = addon.getClass().getClassLoader();
             Class<?> apiType = Class.forName(API_NAME, false, addonClassLoader);
@@ -144,15 +146,10 @@ public final class MmItemBridge {
     public record Identity(String internalName, String revision) {
 
         public Identity {
-            internalName = requireText(internalName, "internalName");
-            revision = requireText(revision, "revision");
+            internalName = TextValidation.requireText(internalName, "internalName");
+            revision = TextValidation.requireText(revision, "revision");
         }
 
-        private static String requireText(String value, String field) {
-            String text = Objects.requireNonNull(value, field).trim();
-            if (text.isBlank()) throw new IllegalArgumentException(field + " cannot be blank");
-            return text;
-        }
     }
 
     /**

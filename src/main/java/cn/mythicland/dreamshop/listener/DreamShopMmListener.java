@@ -1,6 +1,6 @@
 package cn.mythicland.dreamshop.listener;
 
-import cn.mythicland.dreamlib.bootstrap.PluginTaskScope;
+import cn.mythicland.framework.bukkit.task.PluginTaskScope;
 import cn.mythicland.dreamshop.service.ShopService;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

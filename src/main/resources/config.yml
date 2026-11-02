@@ -1,6 +1,3 @@
-database:
-  file: dreamshop.db
-
 trade:
   quantity-timeout-seconds: 30
   preview-timeout-seconds: 30

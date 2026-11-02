@@ -1,7 +1,7 @@
 package cn.mythicland.dreamshop.integration;
 
 import cn.mythicland.dreamrpg.api.CoinService;
-import cn.mythicland.dreamlib.bootstrap.annotation.InjectComponent;
+import cn.mythicland.framework.component.InjectComponent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
